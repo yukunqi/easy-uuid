@@ -31,13 +31,21 @@ public class Uuid {
 
     public void version1() {
         long mbs = 0;
-        //timestamp(time_low 32 time_mid 16 time_hi 12 = 60 bit)
-        long timestamp_part = getTs();
-        mbs |= timestamp_part & 0xfffffffffffffffL;
+        //consider the timestamp to be a 60-bit value
+        long timestamp_part = getTs() & 0xfffffffffffffffL;
+
+        //time_low
+        mbs |= (timestamp_part & 0xffffffffL);
+
+        //time_mid
+        mbs = (mbs << 16) | ((timestamp_part >>> 32) & 0xffffL);
 
         //version(4 bit)
         byte version = 1;
         mbs = (mbs << 4) | version;
+
+        //time_hi
+        mbs = (mbs << 12) | ((timestamp_part >>> 48) & 0xfffL);
 
         mostSigBits = mbs;
 
@@ -45,7 +53,7 @@ public class Uuid {
 
         // set to IETF variant
         lbs |= 0x8;
-        //clock sequence
+        //clock sequence consider to be a 14-bit value
         byte[] clock_seq = getRandomClockSequence();
         lbs = (lbs << 6) | (clock_seq[0] & 0x3f);
         lbs = (lbs << 6) | (clock_seq[1] & 0xff);
@@ -77,6 +85,8 @@ public class Uuid {
 
     private byte[] getNodeId() {
         try {
+            //todo 如何正确获取Mac 地址
+            // 1.可能有的系统 并没有网卡 2.不同的系统的网卡名称各不相同
             NetworkInterface en0 = NetworkInterface.getByName("en0");
             return en0.getHardwareAddress();
         } catch (Exception e) {
@@ -84,6 +94,7 @@ public class Uuid {
         }
     }
 
+    @Override
     public String toString() {
         return (digits(mostSigBits >> 32, 8) + "-" +
                 digits(mostSigBits >> 16, 4) + "-" +
