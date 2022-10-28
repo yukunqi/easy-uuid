@@ -1,8 +1,9 @@
+package com.harris.uuid;
+
 import java.net.NetworkInterface;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.time.temporal.ChronoUnit;
 
 public class Uuid {
     /*
@@ -19,6 +20,8 @@ public class Uuid {
      */
     private long leastSigBits = 0L;
 
+    static long NANOS_PER_DAY = 24 * 60 * 60 * 100_000_000L;
+
     private static final LocalDateTime original = LocalDateTime.of(1582, Month.OCTOBER, 15, 0, 0, 0, 0);
 
     private static class Holder {
@@ -32,20 +35,20 @@ public class Uuid {
     public void version1() {
         long mbs = 0;
         //consider the timestamp to be a 60-bit value
-        long timestamp_part = getTs() & 0xfffffffffffffffL;
+        long timestampPart = getTs() & 0xfffffffffffffffL;
 
         //time_low
-        mbs |= (timestamp_part & 0xffffffffL);
+        mbs |= (timestampPart & 0xffffffffL);
 
         //time_mid
-        mbs = (mbs << 16) | ((timestamp_part >>> 32) & 0xffffL);
+        mbs = (mbs << 16) | ((timestampPart >>> 32) & 0xffffL);
 
         //version(4 bit)
         byte version = 1;
         mbs = (mbs << 4) | version;
 
         //time_hi
-        mbs = (mbs << 12) | ((timestamp_part >>> 48) & 0xfffL);
+        mbs = (mbs << 12) | ((timestampPart >>> 48) & 0xfffL);
 
         mostSigBits = mbs;
 
@@ -54,9 +57,9 @@ public class Uuid {
         // set to IETF variant
         lbs |= 0x8;
         //clock sequence consider to be a 14-bit value
-        byte[] clock_seq = getRandomClockSequence();
-        lbs = (lbs << 6) | (clock_seq[0] & 0x3f);
-        lbs = (lbs << 6) | (clock_seq[1] & 0xff);
+        byte[] clockSeq = getRandomClockSequence();
+        lbs = (lbs << 6) | (clockSeq[0] & 0x3f);
+        lbs = (lbs << 6) | (clockSeq[1] & 0xff);
 
         //node id
         byte[] nodeId = getNodeId();
@@ -69,8 +72,16 @@ public class Uuid {
     }
 
     private long getTs() {
-        //fixme 暂时使用微秒(1000纳秒) 单位来代替 rfc 4122 中的时间戳的间隔单位 100纳秒
-        return original.until(LocalDateTime.now(), ChronoUnit.MICROS);
+        LocalDateTime end = LocalDateTime.now();
+        // day part
+        long dayPart = end.toLocalDate().toEpochDay() - original.toLocalDate().toEpochDay();
+        // nano seconds part within a day
+        long timePart = end.toLocalTime().toNanoOfDay() - original.toLocalTime().toNanoOfDay();
+
+        dayPart = Math.multiplyExact(dayPart,NANOS_PER_DAY / 100);
+        timePart = timePart / 100;
+
+        return Math.addExact(dayPart,timePart);
     }
 
     private byte[] getRandomClockSequence() {
