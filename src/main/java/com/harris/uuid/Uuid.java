@@ -1,9 +1,11 @@
 package com.harris.uuid;
 
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.Enumeration;
 
 public class Uuid {
     /*
@@ -72,16 +74,17 @@ public class Uuid {
     }
 
     private long getTs() {
+        //fixme 考虑算术溢出的情况 RFC4122 round A.D. 3400, depending on the specific algorithm
         LocalDateTime end = LocalDateTime.now();
         // day part
         long dayPart = end.toLocalDate().toEpochDay() - original.toLocalDate().toEpochDay();
         // nano seconds part within a day
         long timePart = end.toLocalTime().toNanoOfDay() - original.toLocalTime().toNanoOfDay();
 
-        dayPart = Math.multiplyExact(dayPart,NANOS_PER_DAY / 100);
+        dayPart = Math.multiplyExact(dayPart, NANOS_PER_DAY / 100);
         timePart = timePart / 100;
 
-        return Math.addExact(dayPart,timePart);
+        return Math.addExact(dayPart, timePart);
     }
 
     private byte[] getRandomClockSequence() {
@@ -95,14 +98,29 @@ public class Uuid {
 
 
     private byte[] getNodeId() {
+        //todo 如何正确获取Mac 地址
+        // 1.可能有的系统 并没有网卡 2.不同的系统的网卡名称各不相同
         try {
-            //todo 如何正确获取Mac 地址
-            // 1.可能有的系统 并没有网卡 2.不同的系统的网卡名称各不相同
-            NetworkInterface en0 = NetworkInterface.getByName("en0");
-            return en0.getHardwareAddress();
-        } catch (Exception e) {
+            NetworkInterface networkInterface = null;
+
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            if (networkInterfaces.hasMoreElements()) {
+                networkInterface = networkInterfaces.nextElement();
+            }
+
+            if (networkInterface == null) {
+                //random get 6 bytes while not find NetworkInterface
+                SecureRandom ng = Uuid.Holder.numberGenerator;
+                byte[] randomBytes = new byte[6];
+                ng.nextBytes(randomBytes);
+                return randomBytes;
+            }
+
+            return networkInterface.getHardwareAddress();
+        } catch (SocketException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     @Override
