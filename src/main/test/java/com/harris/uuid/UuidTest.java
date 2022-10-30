@@ -62,11 +62,11 @@ class UuidTest {
     void timestampTest() throws NoSuchMethodException, InterruptedException {
         Uuid uid = new Uuid();
 
-        long tsBefore = (long) ReflectionUtils.invokeMethod(Uuid.class.getDeclaredMethod("getTs"), uid);
+        long tsBefore = (long) ReflectionUtils.invokeMethod(TimeBasedUuid.class.getDeclaredMethod("getTs"), uid);
 
         Thread.sleep(1);
 
-        long tsAfter = (long) ReflectionUtils.invokeMethod(Uuid.class.getDeclaredMethod("getTs"), uid);
+        long tsAfter = (long) ReflectionUtils.invokeMethod(TimeBasedUuid.class.getDeclaredMethod("getTs"), uid);
 
         System.out.println(tsAfter - tsBefore);
         Assertions.assertTrue((tsAfter - tsBefore) >= 10 * 1000);
