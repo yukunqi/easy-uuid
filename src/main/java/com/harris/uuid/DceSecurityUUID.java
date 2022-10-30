@@ -55,7 +55,7 @@ public class DceSecurityUUID extends TimeBasedUuid {
         //local domain
         byte[] localDomain = getLocalDomain();
         for (int i = 0; i < 1; i++) {
-            lbs = (lbs << 8) | (localDomain[i] & 0xff);
+            lbs = (lbs << 6) | (localDomain[i] & 0xff);
         }
 
         //clock sequence consider to be a 6-bit value

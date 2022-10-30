@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * @description:
  * @author: KunQi Yu
@@ -19,5 +17,22 @@ class DceSecurityUUIDTest {
     void generate_DCE_security_UUID(){
         DceSecurityUUID dceSecurityUUID = new DceSecurityUUID();
         Assertions.assertDoesNotThrow(()-> UUID.fromString(dceSecurityUUID.toString()));
+    }
+
+
+    @Test
+    void versionTest(){
+        DceSecurityUUID dceSecurityUUID = new DceSecurityUUID();
+        UUID fromString = UUID.fromString(dceSecurityUUID.toString());
+        Assertions.assertEquals(2,fromString.version());
+    }
+
+    @Test
+    void variantTest(){
+        DceSecurityUUID dceSecurityUUID = new DceSecurityUUID();
+        UUID fromString = UUID.fromString(dceSecurityUUID.toString());
+        //all using IETF variant
+        UUID randomUUID = UUID.randomUUID();
+        Assertions.assertEquals(randomUUID.variant(),fromString.variant());
     }
 }
