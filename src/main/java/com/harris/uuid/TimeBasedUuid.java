@@ -62,7 +62,7 @@ public abstract class TimeBasedUuid {
 
         try {
             NetworkInterface networkInterface = lookupForNetworkInterface();
-
+            //fixme the first lsb of the first msb in nodeId set to one
             if (networkInterface == null || networkInterface.getHardwareAddress() == null) {
                 //random get 6 bytes while not find NetworkInterface mac address
                 SecureRandom ng = Uuid.Holder.numberGenerator;
